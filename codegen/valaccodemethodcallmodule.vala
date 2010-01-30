@@ -62,12 +62,6 @@ internal class Vala.CCodeMethodCallModule : CCodeAssignmentModule {
 			m = cl.default_construction_method;
 			generate_method_declaration (m, source_declarations);
 			ccall = new CCodeFunctionCall (new CCodeIdentifier (m.get_real_cname ()));
-		} else if (itype is StructValueType) {
-			// constructor
-			var st = (Struct) ((StructValueType) itype).type_symbol;
-			m = st.default_construction_method;
-			generate_method_declaration (m, source_declarations);
-			ccall = new CCodeFunctionCall (new CCodeIdentifier (m.get_real_cname ()));
 		} else if (itype is DelegateType) {
 			deleg = ((DelegateType) itype).delegate_symbol;
 		}
@@ -120,7 +114,7 @@ internal class Vala.CCodeMethodCallModule : CCodeAssignmentModule {
 			}
 		}
 
-		if (m is CreationMethod && m.parent_symbol is Class) {
+		if (m is CreationMethod) {
 			if (context.profile == Profile.GOBJECT) {
 				if (!((Class) m.parent_symbol).is_compact) {
 					ccall.add_argument (new CCodeIdentifier ("object_type"));
@@ -135,8 +129,6 @@ internal class Vala.CCodeMethodCallModule : CCodeAssignmentModule {
 					break;
 				}
 			}
-		} else if (m is CreationMethod && m.parent_symbol is Struct) {
-			ccall.add_argument (new CCodeIdentifier ("self"));
 		} else if (m != null && m.get_type_parameters ().size > 0) {
 			// generic method
 			add_generic_type_arguments (in_arg_map, ma.get_type_arguments (), expr);
@@ -252,7 +244,7 @@ internal class Vala.CCodeMethodCallModule : CCodeAssignmentModule {
 				param.accept (codegen);
 			}
 			head.generate_dynamic_method_wrapper ((DynamicMethod) m);
-		} else if (m is CreationMethod && context.profile == Profile.GOBJECT && m.parent_symbol is Class) {
+		} else if (m is CreationMethod && context.profile == Profile.GOBJECT) {
 			ccall_expr = new CCodeAssignment (new CCodeIdentifier ("self"), new CCodeCastExpression (ccall, current_class.get_cname () + "*"));
 
 			if (!current_class.is_compact && current_class.get_type_parameters ().size > 0) {
